@@ -1,96 +1,159 @@
-
 from flask import Flask, request, redirect, url_for
-import os
 
 app = Flask(__name__)
 
-VERSION = os.getenv("APP_VERSION", "v1")
 patients = []
+
 
 @app.route("/", methods=["GET", "POST"])
 def home():
-    if request.method == "POST":
-        name = request.form.get("name", "").strip()
-        age = request.form.get("age", "").strip()
-        illness = request.form.get("illness", "").strip()
 
-        if name and age.isdigit() and illness:
-            patients.append({
-                "id": len(patients) + 1,
-                "name": name,
-                "age": age,
-                "illness": illness
-            })
+    if request.method == "POST":
+        name = request.form.get("name")
+        age = request.form.get("age")
+        illness = request.form.get("illness")
+
+        patient = {
+            "id": len(patients) + 1,
+            "name": name,
+            "age": age,
+            "illness": illness
+        }
+
+        patients.append(patient)
+
         return redirect(url_for("home"))
 
-    page = """
+    html = """
     <!DOCTYPE html>
     <html>
     <head>
-        <title>Hospital System</title>
+        <title>Hospital Management System - V2</title>
+
         <style>
-            body { font-family: Arial; margin: 40px;
-                   background: #f1f5f9; }
-            .box { background: white; padding: 25px;
-                   border-radius: 12px; max-width: 650px; }
-            input, button { padding: 10px; margin: 6px; }
-            li { margin: 12px 0; }
+            body {
+                font-family: Arial;
+                background: #f2f2f2;
+                margin: 40px;
+            }
+
+            .container {
+                background: white;
+                padding: 30px;
+                max-width: 800px;
+                margin: auto;
+                border-radius: 10px;
+            }
+
+            input {
+                padding: 10px;
+                margin: 5px;
+            }
+
+            button {
+                padding: 10px 20px;
+                cursor: pointer;
+            }
+
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 25px;
+            }
+
+            th, td {
+                border: 1px solid #ccc;
+                padding: 10px;
+                text-align: left;
+            }
+
+            th {
+                background: #eee;
+            }
         </style>
     </head>
+
     <body>
-    <div class="box">
-    <h1>Hospital Management System</h1>
-    <h3>Application: VERSION</h3>
-    <h2>Register Patient</h2>
-    <form method="POST">
-        <input name="name" placeholder="Patient name" required>
-        <input name="age" type="number" min="1" max="120"
-               placeholder="Age" required>
-        <input name="illness" placeholder="Illness" required>
-        <button type="submit">Add Patient</button>
-    </form>
+
+    <div class="container">
+
+        <h1>Hospital Management System</h1>
+
+        <h2>Version 2 - View Patients</h2>
+
+        <h3>Register Patient</h3>
+
+        <form method="POST">
+
+            <input
+                type="text"
+                name="name"
+                placeholder="Patient Name"
+                required
+            >
+
+            <input
+                type="number"
+                name="age"
+                placeholder="Age"
+                required
+            >
+
+            <input
+                type="text"
+                name="illness"
+                placeholder="Illness"
+                required
+            >
+
+            <button type="submit">
+                Add Patient
+            </button>
+
+        </form>
+
+        <h3>Patient List</h3>
+
+        <table>
+
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Age</th>
+                <th>Illness</th>
+            </tr>
     """
 
-    page = page.replace("VERSION", VERSION)
+    for patient in patients:
 
-    if VERSION in ("v2", "v3"):
-        page += "<h2>Patient List</h2><ul>"
+        html += f"""
+            <tr>
+                <td>{patient['id']}</td>
+                <td>{patient['name']}</td>
+                <td>{patient['age']}</td>
+                <td>{patient['illness']}</td>
+            </tr>
+        """
 
-        for p in patients:
-            page += (
-                f"<li>{p['id']}. {p['name']} - "
-                f"Age: {p['age']} - {p['illness']}"
-            )
+    html += """
+        </table>
 
-            if VERSION == "v3":
-                page += (
-                    f""" <form method="POST"
-                    action="/delete/{p['id']}"
-                    style="display:inline">
-                    <button>Delete</button></form>"""
-                )
+    </div>
 
-            page += "</li>"
+    </body>
+    </html>
+    """
 
-        page += "</ul>"
-
-    page += "</div></body></html>"
-    return page
-
-
-@app.route("/delete/<int:patient_id>", methods=["POST"])
-def delete_patient(patient_id):
-    if VERSION != "v3":
-        return "Delete is available only in v3", 404
-
-    global patients
-    patients = [p for p in patients if p["id"] != patient_id]
-    return redirect(url_for("home"))
+    return html
 
 
 @app.route("/health")
 def health():
-    return {"status": "healthy", "version": VERSION}
+
+    return {
+        "status": "healthy",
+        "version": "v2"
+    }
 
 
 if __name__ == "__main__":
